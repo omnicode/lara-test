@@ -11,7 +11,9 @@ class LaraTestServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        $configPath = __DIR__ . '/../../config/lara_test.php';
+
+        $configPath = __DIR__ . DIRECTORY_SEPARATOR . '..'. DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR
+            .'config' . DIRECTORY_SEPARATOR . 'test.php';
         $this->mergeConfigFrom($configPath, 'lara_test');
 
         if ($this->app->runningInConsole()) {
