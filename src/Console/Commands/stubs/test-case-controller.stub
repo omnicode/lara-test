@@ -1,0 +1,45 @@
+<?php
+namespace Tests\Http\Controllers;
+
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use MyDevData\Models\Account\Account;
+use MyDevData\Models\Account\Plan;
+use MyDevData\Models\Account\PlanPermission;
+use MyDevData\Models\Module;
+use MyDevData\Models\User\AuthUser;
+use MyDevData\Models\User\UserSession;
+
+abstract class TestCaseController extends \TestCase
+{
+    use DatabaseTransactions;
+    /**
+     *
+     */
+    public function setUp() {
+        parent::setUp();
+    }
+
+    public function loginAsAdmin()
+    {
+        $this->login(\ConstRole::Admin);
+    }
+
+    public function login($roleId = \ConstRole::User)
+    {
+
+        $plan = factory(Plan::class)->create();
+
+        foreach (Module::all() as $module) {
+            factory(PlanPermission::class)->create(['plan_id' => $plan->id, 'module_id' => $module->id]);
+        }
+
+        $account = factory(Account::class)->create(['generic_trial_plan_stripe_id' => $plan->stripe_id, 'trial_ends_at' => Carbon::now()->addDay()]);
+        $user = factory(AuthUser::class)->create(['current_account_id' => $account->id, 'role_id' => $roleId]);
+        $account->update(['owner_id' => $user->id]);
+        $userSession = factory(UserSession::class)->create(['status' => \ConstSessionStatus::Active, 'user_id' => $user->id]);
+        $this->withSession(['user_session.id' => $userSession->id]);
+        $this->actingAs($user);
+    }
+
+}

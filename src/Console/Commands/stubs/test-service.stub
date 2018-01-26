@@ -1,0 +1,9 @@
+<?php
+namespace Tests\Services;
+
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+
+abstract class TestCaseService extends \TestCase
+{
+     use DatabaseTransactions;
+}

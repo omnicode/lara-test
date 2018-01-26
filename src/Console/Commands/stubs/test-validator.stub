@@ -1,0 +1,21 @@
+<?php
+namespace Tests\Validators;
+
+use LaraValidation\CoreValidator;
+
+abstract class TestCaseValidator extends \TestCase
+{
+    /**
+     * @var
+     */
+    protected $validator;
+
+    /**
+     *
+     */
+    public function setUp() {
+        parent::setUp();
+        $this->validator = new CoreValidator();
+    }
+
+}

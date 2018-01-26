@@ -1,0 +1,9 @@
+<?php
+namespace TestNamespace;
+
+useTestClass
+class TestClass extends TestParentClass
+{
+    testTrait
+    testMethod
+}
