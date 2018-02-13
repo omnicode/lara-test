@@ -3,6 +3,7 @@
 namespace LaraTest\Traits;
 
 use Illuminate\Support\Collection;
+use LaraTest\PHPUnit_Framework_MockObject_Stub_ReturnArguments;
 use LaraValidation\CoreValidator;
 
 trait MockTraits
@@ -117,40 +118,42 @@ trait MockTraits
     /**
      * @param $method
      * @param $object
-     * @param int $argumentNumber
-     * @param string $dataKey
      */
-    protected function methodWillThrowExceptionWithArgument($method, $object, $argumentNumber = 0, $dataKey = 'status')
+    protected function methodWillThrowExceptionWithArgument($method, $object)
     {
         $this->expectsOnceMethod($method, $object)
-            ->will($this->returnCallback(function ($argument) use ($argumentNumber, $dataKey) {
+            ->will($this->returnCallback(function ($argument){
                 $arguments = func_get_args();
-                $argument = $arguments[$argumentNumber];
-
-                if (is_array($argument)) {
-                    if (!empty($argument[$dataKey])) {
-                        $message = $this->getExceptionArrayKeyExistsMessage($dataKey, '', $argument);
-                    } else {
-                        $message = $this->getExceptionArrayKeyDoesNotExistsMessage($dataKey);
-                    }
-                } else {
-                    $message = sprintf('method Argument is %s ', $argument);
-                }
-
+                $message = $this->getExceptionArgumentsMessage($arguments);
                 throw  new \Exception($message);
             }));
     }
 
-    protected function getExceptionArrayKeyExistsMessage($key, $value = '', $data = [])
+    /**
+     * @param $arguments
+     * @return string
+     */
+    protected function getExceptionArgumentsMessage($arguments)
     {
-        $value = !empty($value) ? $value : $data[$key];
-        return sprintf('method array Argument %s => %s', $key, $value);
+        $arguments = $this->fixArgumentsStructure($arguments);
+        return 'method attribute is :' . json_encode($arguments);
     }
 
-    protected function getExceptionArrayKeyDoesNotExistsMessage($key)
-    {
-        return sprintf('method array Argument does not contain %s key', $key);
+    /**
+     * @param $arguments
+     * @return mixed
+     */
+    protected function  fixArgumentsStructure($arguments) {
+        foreach ($arguments as $index => $argument) {
+            if (is_object($argument)) {
+                $arguments[$index ] = 'object:' . get_class($arguments[$index ]);
+            } if (is_array($argument)) {
+                $arguments[$index] = $this->fixArgumentsStructure($argument);
+            }
+        }
+        return $arguments;
     }
+
 
     /***
      * @param $argumentNumber
@@ -169,6 +172,15 @@ trait MockTraits
     protected function methodWillReturnArguments($method, $object)
     {
         $this->expectsOnceMethod($method, $object)->will($this->returnArguments());
+    }
+
+
+    /**
+     * @return PHPUnit_Framework_MockObject_Stub_ReturnArguments
+     */
+    public function returnArguments()
+    {
+        return new PHPUnit_Framework_MockObject_Stub_ReturnArguments();
     }
 
     /**
@@ -250,14 +262,10 @@ trait MockTraits
             $methods = [$methods];
         }
         if (empty($class)) {
-            $class = StubClass::class;
+            $class = \stdClass::class;
         }
         return $this->getMockBuilder($class)->setMethods($methods)->getMock();
     }
 
 }
 
-class StubClass
-{
-
-}
