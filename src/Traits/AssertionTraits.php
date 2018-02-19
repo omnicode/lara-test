@@ -84,5 +84,25 @@ trait AssertionTraits
         $this->assertTrue($repository->getCriteria()->contains($criteria));
     }
 
+    /**
+     * @param $object
+     * @param $method
+     */
+    protected function expectCallMethod($object, $method)
+    {
+        $this->methodWillThrowException($method, $object);
+        $this->expectException(\Exception::class);
+    }
 
+    /**
+     * @param $object
+     * @param $method
+     * @param $arguments
+     */
+    protected function expectCallMethodWithArgument($object, $method, $arguments)
+    {
+        $this->methodWillThrowExceptionWithArgument($method, $object);
+        $message = $this->getExceptionArgumentsMessage($arguments);
+        $this->expectExceptionMessage($message);
+    }
 }
