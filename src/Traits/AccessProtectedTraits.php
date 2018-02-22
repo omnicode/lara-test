@@ -15,7 +15,7 @@ trait AccessProtectedTraits
      * @return mixed
      * @throws \ReflectionException
      */
-    public function invokeMethod(&$object, $methodName, array $parameters = array())
+    public function callProtectedMethod(&$object, $methodName, array $parameters = array())
     {
         $reflection = new \ReflectionClass(get_class($object));
         $method = $reflection->getMethod($methodName);

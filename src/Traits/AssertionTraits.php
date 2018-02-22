@@ -87,10 +87,12 @@ trait AssertionTraits
     /**
      * @param $object
      * @param $method
+     * @param string $message
      */
-    protected function expectCallMethod($object, $method)
+    protected function expectCallMethod($object, $method, $message = 'message')
     {
-        $this->methodWillThrowException($method, $object);
+        $this->methodWillThrowException($object, $method, $message);
+        $this->expectExceptionMessage($message);
         $this->expectException(\Exception::class);
     }
 
@@ -98,11 +100,11 @@ trait AssertionTraits
      * @param $object
      * @param $method
      * @param $arguments
+     * @param string $message
      */
-    protected function expectCallMethodWithArgument($object, $method, $arguments)
+    protected function expectCallMethodWithArgument($object, $method, $arguments, $message = 'message')
     {
-        $this->methodWillThrowExceptionWithArgument($method, $object);
-        $message = $this->getExceptionArgumentsMessage($arguments);
+        $this->methodWillThrowException($object, $method, $message, $arguments);
         $this->expectExceptionMessage($message);
     }
 }

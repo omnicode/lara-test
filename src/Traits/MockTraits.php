@@ -4,12 +4,11 @@ namespace LaraTest\Traits;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
-use LaraTest\PHPUnit_Framework_MockObject_Stub_ReturnArguments;
+use LaraTest\ReturnArguments;
 use LaraValidation\CoreValidator;
 
 trait MockTraits
 {
-
     /**
      * @param $class
      * @param array $arguments
@@ -17,9 +16,7 @@ trait MockTraits
      */
     protected function getMockForAbstract($class, $arguments = [], $methods = [])
     {
-        if (!is_array($methods)) {
-            $methods = [$methods];
-        }
+        make_array($methods);
 
         return $this->getMockForAbstractClass(
             $class,
@@ -45,6 +42,7 @@ trait MockTraits
         if ($this->getMethodsBy($methods)) {
             $mockBuilder->setMethods($methods);
         }
+
         return $mockBuilder->getMock();
     }
 
@@ -63,15 +61,17 @@ trait MockTraits
         } else {
             $mockBuilder->setMethods(null);
         }
+
         return $mockBuilder->getMock();
     }
 
     /**
      * @param $methods
      * @param string $class
+     * @param array $arguments
      * @return mixed
      */
-    protected function getMockObjectWithMockedMethods($methods, $class = '')
+    protected function getMockObjectWithMockedMethods($methods, $class = '', $arguments = [])
     {
         if (!is_array($methods)) {
             $methods = [$methods];
@@ -80,141 +80,137 @@ trait MockTraits
             $class = \stdClass::class;
         }
 
-        return $this->getMockBuilder($class)->setMethods($methods)->getMock();
+        return $this->getMockBuilder($class)->setMethods($methods)->setConstructorArgs($arguments)->getMock();
     }
 
     /**
-     * @param $method
      * @param $object
+     * @param $method
+     * @param array $with
+     * @param $return
+     * @param string $time
+     * @param string $param
      * @return mixed
      */
-    protected function expectsOnceMethod($method, $object)
+    protected function methodWillReturn($object, $method, $return, $with = [], $time = 'once', $param = '')
     {
-        return $object->expects($this->once())->method($method);
-    }
-
-    /***
-     * @param $value
-     * @param $method
-     * @param $object
-     */
-    protected function methodWillReturn($value, $method, $object)
-    {
-        $this->expectsOnceMethod($method, $object)
-            ->will($this->returnCallback(function () use ($value) {
-                return $value;
-            }));
-    }
-
-    /**
-     * @param $method
-     * @param $object
-     */
-    protected function methodWillReturnEmptyArray($method, $object)
-    {
-        $this->methodWillReturn([], $method, $object);
+        make_array($with);
+        return $this->fixExpectsMethod($object, $method, $time, $param, $with)->willReturn($return);
     }
 
     /***
      * @param $object
      * @param $method
+     * @param array $with
+     * @param string $time
+     * @param string $param
      */
-    protected function methodWillReturnTrue($method, $object)
+    protected function methodWillReturnTrue($object, $method, $with = [], $time = 'once', $param = '')
     {
-        $this->methodWillReturn(true, $method, $object);
+        $this->methodWillReturn($object, $method, true, $with, $time, $param);
     }
 
     /**
+     * @param $object
      * @param $methods
-     * @param $object
+     * @param array $with
+     * @param string $time
+     * @param string $param
      */
-    protected function methodsWillReturnTrue($methods, $object)
+    protected function methodsWillReturnTrue($object, $methods, $with = [], $time = 'once', $param = '')
     {
-        if (!is_array($methods)) {
-            $methods = [$methods];
-        }
+        make_array($methods);
+
         foreach ($methods as $method) {
-            $this->methodWillReturn(true, $method, $object);
+            $this->methodWillReturn($object, $method, true, $with, $time, $param);
         }
     }
 
     /***
      * @param $object
      * @param $method
+     * @param array $with
+     * @param string $time
+     * @param string $param
      */
-    protected function methodWillReturnFalse($method, $object)
+    protected function methodWillReturnFalse($object, $method, $with = [], $time = 'once', $param = '')
     {
-        $this->methodWillReturn(false, $method, $object);
+        $this->methodWillReturn($object, $method, false, $with, $time, $param);
     }
 
     /**
+     * @param $object
      * @param $method
-     * @param $mockObject
-     * @param string $message
+     * @param array $with
+     * @param string $time
+     * @param string $param
      */
-    protected function methodWillThrowException($method, $mockObject, $message = 'exception')
+    protected function methodWillReturnEmptyArray($object, $method, $with = [], $time = 'once', $param = '')
     {
-        $mockObject->method($method)->will($this->throwException(new \Exception($message)));
+        $this->methodWillReturn($object, $method, [], $with , $time, $param);
     }
+
 
     /**
      * @param $method
      * @param $object
+     * @param array $data
+     * @param array $with
+     * @param string $time
+     * @param string $param
      */
-    protected function methodWillThrowExceptionWithArgument($method, $object)
+    protected function methodWillReturnObject($method, $object, $data = [], $with = [], $time = 'once', $param = '')
     {
-        $this->expectsOnceMethod($method, $object)
-            ->will($this->returnCallback(function ($argument){
-                $arguments = func_get_args();
-                $message = $this->getExceptionArgumentsMessage($arguments);
-                throw  new \Exception($message);
+        $stdObject = new \stdClass();
+        $stdObject->id = 1;
+
+        foreach ($data as $key => $value) {
+            if (is_numeric($key)) {
+                $key = $value;
+            }
+            $stdObject->{$key} = $value;
+        }
+
+        $this->fixExpectsMethod($object, $method, $time, $param, $with)
+            ->will($this->returnCallback(function () use ($stdObject) {
+                return $stdObject;
             }));
     }
 
-    /**
-     * @param $arguments
-     * @return string
-     */
-    protected function getExceptionArgumentsMessage($arguments)
-    {
-        $arguments = $this->fixArgumentsStructure($arguments);
-        return 'method attribute is :' . json_encode($arguments);
-    }
-
-    /**
-     * @param $arguments
-     * @return mixed
-     */
-    protected function  fixArgumentsStructure($arguments) {
-        foreach ($arguments as $index => $argument) {
-            if (is_object($argument)) {
-                $arguments[$index ] = 'object:' . get_class($arguments[$index ]);
-            } if (is_array($argument)) {
-                $arguments[$index] = $this->fixArgumentsStructure($argument);
-            }
-        }
-        return $arguments;
-    }
-
-
     /***
+     * @param $object
+     * @param $method
      * @param $argumentNumber
-     * @param $method
-     * @param $object
+     * @param array $with
+     * @param string $time
+     * @param string $param
      */
-    protected function methodWillReturnArgument($argumentNumber, $method, $object)
+    protected function methodWillReturnArgument($object, $method, $argumentNumber, $with = [], $time = 'once', $param = '')
     {
-        $this->expectsOnceMethod($method, $object)->will($this->returnArgument($argumentNumber));
+        $this->fixExpectsMethod($object, $method, $time, $param, $with)->will($this->returnArgument($argumentNumber));
     }
 
-    /***
+    /**
+     * @return ReturnArguments
+     */
+    public function returnArguments()
+    {
+        return new ReturnArguments();
+    }
+
+    /**
      * @param $object
      * @param $method
+     * @param string $message
+     * @param array $with
+     * @param string $time
+     * @param string $param
      */
-    protected function methodWillReturnArguments($method, $object)
+    protected function methodWillThrowException($object, $method, $message = 'exception', $with = [], $time = 'once', $param = '')
     {
-        $this->expectsOnceMethod($method, $object)->will($this->returnArguments());
+        $this->fixExpectsMethod($object, $method, $time, $param, $with)->will($this->throwException(new \Exception($message)));
     }
+
 
     /**
      * @param $methods
@@ -223,6 +219,7 @@ trait MockTraits
      */
     protected function chainMethodsWillReturnArguments(&$methods, $object, $arguments = [])
     {
+        //TODO
         $method = array_shift($methods);
         $this->expectsOnceMethod($method, $object)
             ->will($this->returnCallback(function () use ($arguments, $methods) {
@@ -236,70 +233,6 @@ trait MockTraits
                 $this->chainMethodsWillReturnArguments($methods, $instances, $arguments);
                 return $instances;
             }));
-    }
-
-    /**
-     * @return PHPUnit_Framework_MockObject_Stub_ReturnArguments
-     */
-    public function returnArguments()
-    {
-        return new PHPUnit_Framework_MockObject_Stub_ReturnArguments();
-    }
-
-    /**
-     * @param $method
-     * @param $object
-     * @param array $data
-     */
-    protected function methodWillReturnObject($method, $object, $data = [])
-    {
-        $stdObject = new \stdClass();
-        $stdObject->id = 1;
-
-        foreach ($data as $key => $value) {
-            if (is_numeric($key)) {
-                $key = $value;
-            }
-            $stdObject->{$key} = $value;
-        }
-
-        $this->expectsOnceMethod($method, $object)
-            ->will($this->returnCallback(function () use ($stdObject) {
-                return $stdObject;
-            }));
-    }
-
-    /**
-     * @param $method
-     * @param $object
-     * @param array $array
-     */
-    protected function methodWillReturnCollection($method, $object, $array = [])
-    {
-        $this->methodWillReturn(new Collection($array), $method, $object);
-    }
-
-
-    /**
-     * @param $object
-     * @param $method
-     */
-    protected function methodWillReturnCollectionObject($method, $object)
-    {
-        $this->expectsOnceMethod($method, $object)
-            ->will($this->returnCallback(function () {
-                return $this->makeCollectionObject();
-            }));
-    }
-
-
-    /**
-     * @param array $array
-     * @return Collection
-     */
-    protected function makeCollectionObject($array = [])
-    {
-        return new Collection($array);
     }
 
     /**
@@ -319,5 +252,18 @@ trait MockTraits
         return [];
     }
 
+    /**
+     * @param $object
+     * @param $method
+     * @param string $time
+     * @param string $param
+     * @param array $with
+     * @return mixed
+     */
+    protected function fixExpectsMethod($object, $method, $time = 'once', $param = '', $with = [])
+    {
+        $expects = ($param !== '') ?  $this->{$time}($param) : $this->{$time}();
+        return $object->expects($expects)->method($method)->with(...$with);
+    }
 }
 
