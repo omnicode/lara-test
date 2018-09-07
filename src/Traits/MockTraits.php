@@ -16,7 +16,7 @@ trait MockTraits
      */
     protected function getMockForAbstract($class, $arguments = [], $methods = [])
     {
-        make_array($methods);
+        $methods = (array)$methods;
 
         return $this->getMockForAbstractClass(
             $class,
@@ -94,7 +94,7 @@ trait MockTraits
      */
     protected function methodWillReturn($object, $method, $return, $with = [], $time = 'once', $param = '')
     {
-        make_array($with);
+        $with = (array)$with;
         return $this->fixExpectsMethod($object, $method, $time, $param, $with)->willReturn($return);
     }
 
@@ -119,7 +119,7 @@ trait MockTraits
      */
     protected function methodsWillReturnTrue($object, $methods, $with = [], $time = 'once', $param = '')
     {
-        make_array($methods);
+        $methods = (array)$methods;
 
         foreach ($methods as $method) {
             $this->methodWillReturn($object, $method, true, $with, $time, $param);
