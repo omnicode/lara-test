@@ -29,7 +29,8 @@ class MakeTestController extends TestCommand
     /**
      * @var string
      */
-    protected $appPath = 'Http' . DIRECTORY_SEPARATOR . 'Controllers';
+    protected $appPath = '';
+//    protected $appPath = 'Http' . DIRECTORY_SEPARATOR . 'Controllers';
 
     protected $testCaseClass = 'TestCaseController';
 

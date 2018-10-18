@@ -1,15 +1,12 @@
 <?php
 namespace LaraTest\Console\Commands;
 
-use Illuminate\Console\AppNamespaceDetectorTrait;
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Routing\Router;
 
 abstract class TestCommand extends GeneratorCommand
 {
-
-    use AppNamespaceDetectorTrait;
 
     protected $appPath;
 
@@ -41,10 +38,11 @@ abstract class TestCommand extends GeneratorCommand
     /**
      *
      */
-    public function fire()
+    public function handle()
     {
         $filePath = str_replace('/', DIRECTORY_SEPARATOR, $this->getNameInput());
         $files = $this->getFilesBy($filePath);
+        dd($files);
         $this->fixTestCaseClass();
 
         foreach ($files as $file) {
@@ -74,13 +72,13 @@ abstract class TestCommand extends GeneratorCommand
     private function getFilesBy($filePath = '')
     {
         list($paths, $files) = $this->getPathsAndFilesBy($filePath);
-
         foreach ($files as $file) {
             if (!$this->files->exists($file)) {
                 $this->confirmWithMessage($file, 'class');
             }
         }
 
+dd($paths);
         foreach ($paths as $path) {
             if ($this->files->exists($path)) {
                 foreach ($this->files->allFiles($path) as $file) {
